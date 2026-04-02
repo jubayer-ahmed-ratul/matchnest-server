@@ -15,12 +15,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Ensure DB connection on each request (for serverless)
-app.use(async (req, res, next) => {
-  await connectDB();
-  next();
-});
-
 // Routes
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
