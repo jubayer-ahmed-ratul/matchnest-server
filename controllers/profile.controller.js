@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 // @route   PUT /api/profile
 export const updateProfile = async (req, res, next) => {
   try {
-    const allowedFields = ["age", "gender", "religion", "profession", "bio", "phone", "location", "profilePhoto", "verificationDocs", "education", "family", "partnerPreference"];
+    const allowedFields = ["age", "gender", "religion", "profession", "bio", "phone", "location", "profilePhoto", "verificationDocs", "education", "family", "partnerPreference", "hobbies", "height", "weight", "maritalStatus", "bloodGroup", "career", "spiritual"];
     const updates = {};
 
     allowedFields.forEach((field) => {

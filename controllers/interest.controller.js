@@ -28,7 +28,10 @@ export const sendInterest = async (req, res, next) => {
       }
     }
 
-    const interest = await Interest.create({ sender: senderId, receiver: receiverId });
+    // Note — all users can send
+    const note = req.body.note || undefined;
+
+    const interest = await Interest.create({ sender: senderId, receiver: receiverId, note });
     res.status(201).json({ success: true, message: "Interest sent successfully", interest });
   } catch (error) {
     next(error);

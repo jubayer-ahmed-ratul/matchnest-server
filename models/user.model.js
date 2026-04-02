@@ -56,6 +56,27 @@ const userSchema = new mongoose.Schema(
       maxlength: [500, "Bio cannot exceed 500 characters"],
       trim: true,
     },
+    hobbies: [{ type: String, trim: true }],
+    height: { type: String, trim: true },
+    weight: { type: String, trim: true },
+    maritalStatus: {
+      type: String,
+      enum: ["never_married", "divorced", "widowed", "other"],
+    },
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+    },
+    career: {
+      company: { type: String, trim: true },
+      annualIncome: { type: String, trim: true },
+    },
+    spiritual: {
+      practiceLevel: {
+        type: String,
+        enum: ["practising", "moderate", "not_practising", "other"],
+      },
+    },
     phone: {
       type: String,
       trim: true,

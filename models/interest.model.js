@@ -17,6 +17,11 @@ const interestSchema = new mongoose.Schema(
       enum: ["pending", "accepted", "rejected"],
       default: "pending",
     },
+    note: {
+      type: String,
+      maxlength: 300,
+      trim: true,
+    },
   },
   { timestamps: true }
 );

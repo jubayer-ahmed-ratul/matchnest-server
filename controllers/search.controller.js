@@ -63,7 +63,7 @@ export const getProfileById = async (req, res, next) => {
       _id: req.params.id,
       isActive: true,
       role: "user",
-    }).select("name age gender religion profession bio location profilePhoto profileStatus membershipPlan phone profileViews viewedBy photos education family partnerPreference createdAt");
+    }).select("name age gender religion profession bio location profilePhoto profileStatus membershipPlan phone profileViews viewedBy photos education family partnerPreference hobbies height weight maritalStatus bloodGroup career spiritual createdAt");
 
     if (!user) return res.status(404).json({ success: false, message: "Profile not found" });
 

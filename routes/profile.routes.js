@@ -1,11 +1,15 @@
 import express from "express";
 import { updateProfile, requestVerification, verifyUser } from "../controllers/profile.controller.js";
 import { protect, adminOnly } from "../middleware/auth.middleware.js";
+import User from "../models/user.model.js";
 
 const router = express.Router();
 
-router.get("/", protect, async (req, res) => {
-  res.json({ success: true, user: req.user });
+router.get("/", protect, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    res.json({ success: true, user });
+  } catch (error) { next(error); }
 });
 router.put("/", protect, updateProfile);
 router.post("/request-verification", protect, requestVerification);
@@ -16,6 +20,7 @@ router.post("/photos", protect, async (req, res, next) => {
   try {
     const { url } = req.body;
     const user = await User.findById(req.user._id);
+    if (!user.photos) user.photos = [];
     if (user.photos.length >= 5) {
       return res.status(400).json({ success: false, message: "Maximum 5 photos allowed" });
     }
