@@ -31,50 +31,56 @@ router.get("/suggestions", protect, async (req, res, next) => {
     const incomeLevel = { "0": 0, below_3L: 1, "3L_5L": 2, "5L_10L": 3, "10L_20L": 4, above_20L: 5 };
 
     const scored = candidates.map((candidate) => {
-      let score = 0;
-      const breakdown = [];
+      try {
+        let score = 0;
+        const breakdown = [];
 
-      // Religion match (25pts)
-      if (me.religion && candidate.religion && me.religion === candidate.religion) {
-        score += 25; breakdown.push("Religion");
+        // Religion match (30pts)
+        if (me.religion && candidate.religion && me.religion === candidate.religion) {
+          score += 30; breakdown.push("Religion");
+        }
+
+        // Education similarity (25pts)
+        const myEdu = eduLevel[me.education] || 0;
+        const theirEdu = eduLevel[candidate.education] || 0;
+        if (myEdu && theirEdu && Math.abs(myEdu - theirEdu) <= 1) {
+          score += 25; breakdown.push("Education");
+        }
+
+        // Income/lifestyle similarity (20pts)
+        const myIncomeKey = String(me.career?.annualIncome ?? "");
+        const theirIncomeKey = String(candidate.career?.annualIncome ?? "");
+        const myIncome = incomeLevel[myIncomeKey] ?? -1;
+        const theirIncome = incomeLevel[theirIncomeKey] ?? -1;
+        if (myIncome >= 0 && theirIncome >= 0 && Math.abs(myIncome - theirIncome) <= 1) {
+          score += 20; breakdown.push("Lifestyle");
+        }
+
+        // Age range (15pts)
+        const theirAge = candidate.age;
+        const myPrefMin = Number(me.partnerPreference?.minAge) || 0;
+        const myPrefMax = Number(me.partnerPreference?.maxAge) || 0;
+        if (theirAge && myPrefMin && myPrefMax && theirAge >= myPrefMin && theirAge <= myPrefMax) {
+          score += 15; breakdown.push("Age");
+        } else if (theirAge && me.age && Math.abs(theirAge - me.age) <= 7) {
+          score += 10; breakdown.push("Age");
+        }
+
+        // Location match (10pts)
+        if (me.location?.city && candidate.location?.city &&
+          me.location.city.toLowerCase() === candidate.location.city.toLowerCase()) {
+          score += 10; breakdown.push("Location");
+        }
+
+        return { ...candidate.toObject(), matchScore: score, matchBreakdown: breakdown };
+      } catch (e) {
+        return { ...candidate.toObject(), matchScore: 0, matchBreakdown: [] };
       }
-
-      // Education similarity (20pts)
-      const myEdu = eduLevel[me.education] || 0;
-      const theirEdu = eduLevel[candidate.education] || 0;
-      if (myEdu && theirEdu && Math.abs(myEdu - theirEdu) <= 1) {
-        score += 20; breakdown.push("Education");
-      }
-
-      // Income/profession similarity (20pts)
-      const myIncome = incomeLevel[me.career?.annualIncome] ?? -1;
-      const theirIncome = incomeLevel[candidate.career?.annualIncome] ?? -1;
-      if (myIncome >= 0 && theirIncome >= 0 && Math.abs(myIncome - theirIncome) <= 1) {
-        score += 20; breakdown.push("Lifestyle");
-      }
-
-      // Age range from partner preference (20pts)
-      const theirAge = candidate.age;
-      const myPrefMin = me.partnerPreference?.minAge;
-      const myPrefMax = me.partnerPreference?.maxAge;
-      if (theirAge && myPrefMin && myPrefMax && theirAge >= myPrefMin && theirAge <= myPrefMax) {
-        score += 20; breakdown.push("Age");
-      } else if (theirAge && me.age && Math.abs(theirAge - me.age) <= 5) {
-        score += 10; breakdown.push("Age");
-      }
-
-      // Location match (15pts)
-      if (me.location?.city && candidate.location?.city &&
-        me.location.city.toLowerCase() === candidate.location.city.toLowerCase()) {
-        score += 15; breakdown.push("Location");
-      }
-
-      return { ...candidate.toObject(), matchScore: score, matchBreakdown: breakdown };
     });
 
-    // Sort by score descending, take top 12
+    // threshold 30% — show anyone with at least one match criteria
     const suggestions = scored
-      .filter((s) => s.matchScore >= 60)
+      .filter((s) => s.matchScore >= 30)
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, 12);
 
