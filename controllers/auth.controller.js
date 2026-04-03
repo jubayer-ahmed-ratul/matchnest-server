@@ -10,6 +10,8 @@ const userResponse = (user) => ({
   role: user.role,
   membershipPlan: user.membershipPlan || "free",
   profilePhoto: user.profilePhoto,
+  gender: user.gender || null,
+  isActive: user.isActive,
 });
 
 // @desc    Register
@@ -46,9 +48,6 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email }).select("+password");
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, message: "Invalid email or password" });
-    }
-    if (!user.isActive) {
-      return res.status(403).json({ success: false, message: "Account has been deactivated" });
     }
     const token = generateToken(user._id);
     res.json({ success: true, token, user: userResponse(user) });
