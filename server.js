@@ -25,6 +25,7 @@ import adminRoutes from "./routes/admin.routes.js";
 import storyRoutes from "./routes/story.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -35,6 +36,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/stories", storyRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Health check
 app.get("/", (req, res) => {
