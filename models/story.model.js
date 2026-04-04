@@ -16,6 +16,7 @@ const storySchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    order: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

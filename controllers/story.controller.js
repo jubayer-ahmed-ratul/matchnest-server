@@ -4,7 +4,7 @@ import Story from "../models/story.model.js";
 export const getApprovedStories = async (req, res, next) => {
   try {
     const stories = await Story.find({ status: "approved" })
-      .sort({ createdAt: -1 })
+      .sort({ order: 1, createdAt: -1 })
       .populate("submittedBy", "name");
     res.json({ success: true, stories });
   } catch (error) { next(error); }
@@ -69,5 +69,19 @@ export const deleteStory = async (req, res, next) => {
   try {
     await Story.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: "Story deleted" });
+  } catch (error) { next(error); }
+};
+
+// Admin: reorder stories
+export const reorderStories = async (req, res, next) => {
+  try {
+    const { orderedIds } = req.body; // array of story IDs in new order
+    if (!Array.isArray(orderedIds)) {
+      return res.status(400).json({ success: false, message: "orderedIds must be an array" });
+    }
+    await Promise.all(
+      orderedIds.map((id, index) => Story.findByIdAndUpdate(id, { order: index }))
+    );
+    res.json({ success: true, message: "Stories reordered" });
   } catch (error) { next(error); }
 };

@@ -3,9 +3,10 @@ import { getPlan } from "../utils/planPermissions.js";
 
 export const searchProfiles = async (req, res, next) => {
   try {
-    const { gender, religion, profession, city, minAge, maxAge, page = 1, limit = 10 } = req.query;
+    const { gender, religion, profession, city, minAge, maxAge, verified, page = 1, limit = 10 } = req.query;
 
     const userPlan = getPlan(req.user);
+    const myPlan = req.user?.membershipPlan || "free";
 
     const filter = {
       _id: { $ne: req.user._id },
@@ -13,10 +14,22 @@ export const searchProfiles = async (req, res, next) => {
       role: "user",
     };
 
+    // Free users cannot see premium or elite profiles
+    if (myPlan === "free") {
+      filter.membershipPlan = "free";
+    } else if (myPlan === "premium") {
+      // premium can see free + premium, not elite
+      filter.membershipPlan = { $in: ["free", "premium"] };
+    }
+    // elite can see everyone
+
     // Free users can only see non-verified profiles
     if (!userPlan.canViewVerified) {
       filter.profileStatus = { $ne: "verified" };
     }
+
+    // Verified filter
+    if (verified === "true") filter.profileStatus = "verified";
 
     if (gender) filter.gender = gender;
     if (religion) filter.religion = religion;
@@ -35,19 +48,21 @@ export const searchProfiles = async (req, res, next) => {
 
     const skip = (Number(page) - 1) * Number(limit);
 
-    // Elite users get priority listing (elite first)
-    const sortOrder = userPlan.priorityListing
-      ? { membershipPlan: -1, createdAt: -1 }
-      : { createdAt: -1 };
+    // Plan-based sort: elite first → premium → free, then by date
+    const planOrder = { elite: 0, premium: 1, free: 2 };
+    const allUsers = await User.find(filter)
+      .select("name age gender religion profession bio location profilePhoto profileStatus membershipPlan")
+      .sort({ createdAt: -1 });
 
-    const [users, total] = await Promise.all([
-      User.find(filter)
-        .select("name age gender religion profession bio location profilePhoto profileStatus membershipPlan")
-        .skip(skip)
-        .limit(Number(limit))
-        .sort(sortOrder),
-      User.countDocuments(filter),
-    ]);
+    // Sort by plan priority
+    allUsers.sort((a, b) => {
+      const pa = planOrder[a.membershipPlan] ?? 2;
+      const pb = planOrder[b.membershipPlan] ?? 2;
+      return pa - pb;
+    });
+
+    const total = allUsers.length;
+    const users = allUsers.slice(skip, skip + Number(limit));
 
     res.json({ success: true, total, page: Number(page), pages: Math.ceil(total / Number(limit)), users });
   } catch (error) {

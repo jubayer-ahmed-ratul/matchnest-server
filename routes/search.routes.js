@@ -20,6 +20,8 @@ router.get("/suggestions", protect, async (req, res, next) => {
       role: "user",
     };
     if (oppositeGender) filter.gender = oppositeGender;
+    // Same religion only
+    if (me.religion) filter.religion = me.religion;
 
     const candidates = await User.find(filter)
       .select("name age gender religion profession education location profilePhoto profileStatus career family partnerPreference hobbies maritalStatus")
@@ -78,9 +80,9 @@ router.get("/suggestions", protect, async (req, res, next) => {
       }
     });
 
-    // threshold 30% — show anyone with at least one match criteria
+    // threshold 80%
     const suggestions = scored
-      .filter((s) => s.matchScore >= 30)
+      .filter((s) => s.matchScore >= 80)
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, 12);
 
