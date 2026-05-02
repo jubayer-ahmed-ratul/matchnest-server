@@ -7,6 +7,7 @@ export const searchProfiles = async (req, res, next) => {
 
     const userPlan = getPlan(req.user);
     const myPlan = req.user?.membershipPlan || "free";
+    const isAdmin = req.user?.role === "admin";
 
     const filter = {
       _id: { $ne: req.user._id },
@@ -14,19 +15,21 @@ export const searchProfiles = async (req, res, next) => {
       role: "user",
     };
 
-    // Free users cannot see premium or elite profiles
-    if (myPlan === "free") {
-      filter.membershipPlan = "free";
-    } else if (myPlan === "premium") {
-      // premium can see free + premium, not elite
-      filter.membershipPlan = { $in: ["free", "premium"] };
-    }
-    // elite can see everyone
+    if (!isAdmin) {
+      // Free users cannot see premium or elite profiles
+      if (myPlan === "free") {
+        filter.membershipPlan = "free";
+      } else if (myPlan === "premium") {
+        filter.membershipPlan = { $in: ["free", "premium"] };
+      }
+      // elite can see everyone
 
-    // Free users can only see non-verified profiles
-    if (!userPlan.canViewVerified) {
-      filter.profileStatus = { $ne: "verified" };
+      // Free users can only see non-verified profiles
+      if (!userPlan.canViewVerified) {
+        filter.profileStatus = { $ne: "verified" };
+      }
     }
+    // admin sees everyone with no restrictions
 
     // Verified filter
     if (verified === "true") filter.profileStatus = "verified";
